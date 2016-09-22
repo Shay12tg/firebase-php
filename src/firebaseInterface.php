@@ -3,7 +3,6 @@ namespace Firebase;
 
 /**
  * Interface FirebaseInterface
- *
  * @package Firebase
  */
 interface FirebaseInterface
