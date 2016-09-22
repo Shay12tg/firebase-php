@@ -1,7 +1,10 @@
 <?php
 namespace Firebase;
 
+require_once __DIR__ . '/firebaseInterface.php';
+
 use \Exception;
+
 
 /**
  * Firebase PHP Client Library
@@ -130,9 +133,9 @@ class FirebaseLib implements FirebaseInterface
 	 *
 	 * @return array Response
 	 */
-	public function set($path, $data, $options = array())
+	public function set($path, $data, $options = array(), $retries = 0)
 	{
-		return $this->_writeData($path, $data, 'PUT', $options);
+		return $this->_writeData($path, $data, 'PUT', $options, $retries);
 	}
 
 	/**
@@ -145,9 +148,9 @@ class FirebaseLib implements FirebaseInterface
 	 *
 	 * @return array Response
 	 */
-	public function push($path, $data, $options = array())
+	public function push($path, $data, $options = array(), $retries = 0)
 	{
-		return $this->_writeData($path, $data, 'POST', $options);
+		return $this->_writeData($path, $data, 'POST', $options, $retries);
 	}
 
 	/**
@@ -160,9 +163,9 @@ class FirebaseLib implements FirebaseInterface
 	 *
 	 * @return array Response
 	 */
-	public function update($path, $data, $options = array())
+	public function update($path, $data, $options = array(), $retries = 0)
 	{
-		return $this->_writeData($path, $data, 'PATCH', $options);
+		return $this->_writeData($path, $data, 'PATCH', $options, $retries);
 	}
 
 	/**
@@ -228,7 +231,7 @@ class FirebaseLib implements FirebaseInterface
 		return $ch;
 	}
 
-	private function _writeData($path, $data, $method = 'PUT', $options = array())
+	private function _writeData($path, $data, $method = 'PUT', $options = array(), $retries = 0)
 	{
 		$jsonData = json_encode($data);
 		$header = array(
@@ -240,6 +243,12 @@ class FirebaseLib implements FirebaseInterface
 			curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
 			$return = curl_exec($ch);
+			while (--$retries >= 0) {
+				if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200)
+					break;
+				usleep(250000);
+				$return = curl_exec($ch);
+			}
 		} catch (Exception $e) {
 			$return = null;
 		}
